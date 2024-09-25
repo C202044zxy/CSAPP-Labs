@@ -1,0 +1,112 @@
+phase_6() {
+    r13 = rsp; 
+    rsi = rsp; 
+    read_six_numbers();
+    r14 = rsp;
+    r12d = 0;
+401114: 
+    rbp = r13;
+    eax = M[r13];
+    eax -= 1;
+    if(eax <= 5)
+        goto 401128;
+    explode();
+401128: 
+    r12d += 1
+    if(r12d == 6)
+        goto 401153;
+    ebx = r12d;
+401135:
+    rax = ebx;
+    eax = M[4 * rax + rsp];
+    if(eax != M[rbp])
+        goto 401145;
+    explode();
+401145: 
+    ebx += 1;
+    if(ebx <= 5)
+        goto 401135;
+    
+    r13+=4;
+    goto 401114;
+
+// check whether there are two identical element.
+// if so, the bomb explodes.
+------
+
+401153:
+    rsi = rsp + 0x18;
+    rax = r14;
+    ecx = 7;
+401160: 
+    edx = ecx;
+    edx -= M[rax];
+    M[rax] = edx;
+    rax += 4;
+    if(rax != rsi)
+        goto 401160;
+    
+    esi = 0;
+// turn x into 7 - x
+    goto 401197;
+
+401176: 
+    rdx = M[rdx + 0x8];             # M[rdx] stores the value
+    eax += 1;                       # M[rdx + 8] stores the next address. 
+    if(ecx != eax)
+        goto 401176;
+    goto 401188;
+401183:
+    edx = $0x6032d0;                # start address
+401188: 
+    M[rsp + 2*rsi + 0x20] = rdx;    # address 
+    rsi += 4;
+    if(rsi == 0x18)
+        goto 4011ab;
+401197:
+    ecx = M[rsp + rsi];             # array length
+    if(ecx <= 1)
+        goto 401183;
+    eax = 1;
+    edx = $0x6032d0;
+    goto 401176;
+
+// get values on a chain, according to the given array. 
+
+------
+
+4011ab:
+    rbx = M[rsp + 0x20];    # the first address of chain
+    rax = rsp + 0x28;
+    rsi = rsp + 0x50;
+    rcx = rbx;
+4011bd: 
+    rdx = M[rax];           # next address
+    M[rcx + 8] = rdx;       # point to the next address instead of the initial
+    rax += 8;
+    if(rax == rsi)
+        goto 4011d2;
+    rcx = rdx;
+    goto 4011bd;
+4011d2: 
+    M[rdx + 8] = 0;
+
+// reconstruct the chain in the order of given array. 
+
+----- 
+
+    ebp = 5;
+4011df: 
+    rax = M[rbx + 8];
+    eax = M[rax];
+    if(M[rbx] >= rax) // this one >= next one 
+        goto 4011ee;
+    explode();
+    rbx = M[rbx + 8];
+    ebp -= 1;
+    if(ebp != 0)
+        goto 4011df;
+
+// should be in an non-increasing order.
+
+}
